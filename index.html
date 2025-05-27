@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Статистика користувача</title>
+</head>
+<body>
+  <div id="stats" style="font-family:sans-serif;padding:20px;"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get("mail");
+
+    if (!email) {
+      document.getElementById("stats").innerText = "Немає email у посиланні.";
+      throw new Error("No email provided");
+    }
+
+    fetch("https://script.google.com/macros/s/AKfycbxq5QUh4yIniUCvBw2exKI1US1oYklV5f1qvSDNKZMTSCI8YdaCWKbL3KKVH_wsF8LS/exec?user=" + encodeURIComponent(email))
+      .then(r => r.json())
+      .then(data => {
+        if (!data["mail"]) {
+          document.getElementById("stats").innerText = "Користувача не знайдено або немає даних.";
+          return;
+        }
+
+        const makeLine = (label, value) => `<p><strong>${label}:</strong> ${value || '—'}</p>`;
+
+        document.getElementById("stats").innerHTML = `
+          <h2>Привіт, ${data["Name"] || 'Користувачу'}!</h2>
+          ${makeLine("Бонус", data["Бонус"])}
+          ${makeLine("% перехід знайомств", data["% перехід знайомств"])}
+          ${makeLine("% перехід юа", data["% перехід юа"])}
+          ${makeLine("Депи за вчора", data["депи за вчора"])}
+          ${makeLine("Виплати за вчора", data["виплати за вчора"])}
+          ${makeLine("Тотал за місяць", data["тотал за місяць"])}
+          ${makeLine("Нет за місяць", data["нет за місяць"])}
+          ${makeLine("Кількість гравців", data["кількість гравців"])}
+          ${makeLine("Штрафи", data["штрафи"])}
+          ${makeLine("Кількість хвороб", data["кількість хвороб"])}
+          ${makeLine("Кількість вихідних", data["кількість вихідних"])}
+          ${makeLine("Кількість відпусток", data["кількість відпусток"])}
+        `;
+      })
+      .catch(e => {
+        document.getElementById("stats").innerText = "Помилка завантаження.";
+        console.error(e);
+      });
+  </script>
+</body>
+</html>
