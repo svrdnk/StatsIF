@@ -1,152 +1,20 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Особиста статистика</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f7f9fc;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 60px auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
-      padding: 40px;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    input {
-      padding: 10px;
-      width: 100%;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      padding: 10px 20px;
-      background: #4a6cf7;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #3d59d8;
-    }
-    .line {
-      margin: 8px 0;
-    }
-    .logout {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #888;
-      text-align: right;
-    }
-    .logout button {
-      background: none;
-      color: #4a6cf7;
-      border: none;
-      cursor: pointer;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вхід</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="container" id="app">
-    <h2>Завантаження...</h2>
+  <div class="container" id="login-form">
+    <h2>Вхід</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Пароль">
+    <button onclick="login()">Увійти</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZYfFgC7QURGVwG4ElXef36cF6E5z8Bxg",
-      authDomain: "trend-collector-460012.firebaseapp.com",
-      projectId: "trend-collector-460012",
-      storageBucket: "trend-collector-460012.appspot.com",
-      messagingSenderId: "946703411029",
-      appId: "1:946703411029:web:61276a13cf2e4013fcd63b"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const SHEET_URL = "https://opensheet.elk.sh/1kTMLSuEuaxM-C1EzhUGccZdayDwFc4GbTSVD11s-j7M/Stats";
-
-    function renderLogin() {
-      document.getElementById("app").innerHTML = `
-        <h2>Вхід</h2>
-        <input type="email" id="email" placeholder="Email" />
-        <input type="password" id="password" placeholder="Пароль" />
-        <button onclick="login()">Увійти</button>
-      `;
-    }
-
-    function renderStats(userData) {
-      const makeLine = (label, value) => `<div class="line"><strong>${label}:</strong> ${value || "—"}</div>`;
-      document.getElementById("app").innerHTML = `
-        <h2>Привіт, ${userData["Name"] || "користувачу"}!</h2>
-        ${makeLine("Бонус", userData["Бонус"])}
-        ${makeLine("% перехід знайомств", userData["% перехід знайомств"])}
-        ${makeLine("% перехід юа", userData["% перехід юа"])}
-        ${makeLine("Депи за вчора", userData["депи за вчора"])}
-        ${makeLine("Виплати за вчора", userData["виплати за вчора"])}
-        ${makeLine("Тотал за місяць", userData["тотал за місяць"])}
-        ${makeLine("Нет за місяць", userData["нет за місяць"])}
-        ${makeLine("Кількість гравців", userData["кількість гравців"])}
-        ${makeLine("Штрафи", userData["штрафи"])}
-        ${makeLine("Кількість хвороб", userData["кількість хвороб"])}
-        ${makeLine("Кількість вихідних", userData["кількість вихідних"])}
-        ${makeLine("Кількість відпусток", userData["кількість відпусток"])}
-        <div class="logout"><button onclick="logout()">Вийти</button></div>
-      `;
-    }
-
-    window.login = async function () {
-      const email = document.getElementById("email").value;
-      const pass = document.getElementById("password").value;
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (e) {
-        alert("Помилка входу: " + e.message);
-      }
-    };
-
-    window.logout = async function () {
-      await signOut(auth);
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        renderLogin();
-        return;
-      }
-
-      const email = user.email;
-      const res = await fetch(SHEET_URL);
-      const data = await res.json();
-      const userData = data.find(row => row.mail === email);
-
-      if (userData) {
-        renderStats(userData);
-      } else {
-        document.getElementById("app").innerHTML = `
-          <p>Користувача з поштою <strong>${email}</strong> не знайдено в таблиці.</p>
-          <div class="logout"><button onclick="logout()">Вийти</button></div>
-        `;
-      }
-    });
-  </script>
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth.js"></script>
 </body>
 </html>
