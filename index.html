@@ -17,7 +17,7 @@
       throw new Error("No email provided");
     }
 
-    fetch("https://script.google.com/macros/s/AKfycbxq5QUh4yIniUCvBw2exKI1US1oYklV5f1qvSDNKZMTSCI8YdaCWKbL3KKVH_wsF8LS/exec?user=" + encodeURIComponent(email))
+    fetch("https://script.google.com/macros/library/d/1Q5A4ywQalLy1Fki4Og5dJbv5uf4ggQcHpBnVFZSYc14EdGXouut4tJZJ/exec?user=" + encodeURIComponent(email))
       .then(r => r.json())
       .then(data => {
         if (!data["mail"]) {
