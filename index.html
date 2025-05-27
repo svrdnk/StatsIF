@@ -10,7 +10,7 @@
   <div id="stats" style="margin-top:20px;"></div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwIC2laYVDaMbA8c9DD7o88hDwQHX8LG4DyLY0a2l4FBhc1FCOgw8nxM_m4A40qzgqF/exec";
+    const SHEET_URL = "https://opensheet.elk.sh/1kTMLSuEuaxM-C1EzhUGccZdayDwFc4GbTSVD11s-j7M/Stats";
 
     function renderLogin() {
       document.getElementById("auth").innerHTML = `
@@ -36,42 +36,40 @@
     }
 
     function loadStats(email) {
-      fetch(`${API_URL}?user=${encodeURIComponent(email)}`)
-        .then(r => {
-          if (!r.ok) throw new Error("Fetch failed");
-          return r.json();
-        })
+      fetch(SHEET_URL)
+        .then(r => r.json())
         .then(data => {
-          if (!data["mail"]) {
-            document.getElementById("stats").innerText = "Користувача не знайдено або немає даних.";
+          const user = data.find(row => row.mail === email);
+          if (!user) {
+            document.getElementById("stats").innerText = "Користувача не знайдено.";
             return;
           }
 
           const makeLine = (label, value) => `<p><strong>${label}:</strong> ${value || '—'}</p>`;
 
           document.getElementById("auth").innerHTML = `
-            <p>Ви увійшли як <strong>${data["mail"]}</strong> <button onclick="logout()">Вийти</button></p>
+            <p>Ви увійшли як <strong>${user.mail}</strong> <button onclick="logout()">Вийти</button></p>
           `;
 
           document.getElementById("stats").innerHTML = `
-            <h2>Привіт, ${data["Name"] || 'Користувачу'}!</h2>
-            ${makeLine("Бонус", data["Бонус"])}
-            ${makeLine("% перехід знайомств", data["% перехід знайомств"])}
-            ${makeLine("% перехід юа", data["% перехід юа"])}
-            ${makeLine("Депи за вчора", data["депи за вчора"])}
-            ${makeLine("Виплати за вчора", data["виплати за вчора"])}
-            ${makeLine("Тотал за місяць", data["тотал за місяць"])}
-            ${makeLine("Нет за місяць", data["нет за місяць"])}
-            ${makeLine("Кількість гравців", data["кількість гравців"])}
-            ${makeLine("Штрафи", data["штрафи"])}
-            ${makeLine("Кількість хвороб", data["кількість хвороб"])}
-            ${makeLine("Кількість вихідних", data["кількість вихідних"])}
-            ${makeLine("Кількість відпусток", data["кількість відпусток"])}
+            <h2>Привіт, ${user["Name"] || 'Користувачу'}!</h2>
+            ${makeLine("Бонус", user["Бонус"])}
+            ${makeLine("% перехід знайомств", user["% перехід знайомств"])}
+            ${makeLine("% перехід юа", user["% перехід юа"])}
+            ${makeLine("Депи за вчора", user["депи за вчора"])}
+            ${makeLine("Виплати за вчора", user["виплати за вчора"])}
+            ${makeLine("Тотал за місяць", user["тотал за місяць"])}
+            ${makeLine("Нет за місяць", user["нет за місяць"])}
+            ${makeLine("Кількість гравців", user["кількість гравців"])}
+            ${makeLine("Штрафи", user["штрафи"])}
+            ${makeLine("Кількість хвороб", user["кількість хвороб"])}
+            ${makeLine("Кількість вихідних", user["кількість вихідних"])}
+            ${makeLine("Кількість відпусток", user["кількість відпусток"])}
           `;
         })
         .catch(e => {
           document.getElementById("stats").innerText = "❌ Помилка завантаження.";
-          console.error("Fetch error:", e);
+          console.error(e);
         });
     }
 
