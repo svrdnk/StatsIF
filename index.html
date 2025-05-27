@@ -3,82 +3,152 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Статистика користувача</title>
+  <title>Особиста статистика</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 60px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
+      padding: 40px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #4a6cf7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3d59d8;
+    }
+    .line {
+      margin: 8px 0;
+    }
+    .logout {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #888;
+      text-align: right;
+    }
+    .logout button {
+      background: none;
+      color: #4a6cf7;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body style="font-family:sans-serif;padding:20px;">
-  <div id="auth"></div>
-  <div id="stats" style="margin-top:20px;"></div>
+<body>
+  <div class="container" id="app">
+    <h2>Завантаження...</h2>
+  </div>
 
-  <script>
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZYfFgC7QURGVwG4ElXef36cF6E5z8Bxg",
+      authDomain: "trend-collector-460012.firebaseapp.com",
+      projectId: "trend-collector-460012",
+      storageBucket: "trend-collector-460012.appspot.com",
+      messagingSenderId: "946703411029",
+      appId: "1:946703411029:web:61276a13cf2e4013fcd63b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
     const SHEET_URL = "https://opensheet.elk.sh/1kTMLSuEuaxM-C1EzhUGccZdayDwFc4GbTSVD11s-j7M/Stats";
 
     function renderLogin() {
-      document.getElementById("auth").innerHTML = `
+      document.getElementById("app").innerHTML = `
         <h2>Вхід</h2>
-        <input type="email" id="emailInput" placeholder="Введіть вашу пошту" style="padding:8px;width:300px;" />
-        <button onclick="login()" style="padding:8px 12px;">Увійти</button>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Пароль" />
+        <button onclick="login()">Увійти</button>
       `;
     }
 
-    function login() {
-      const email = document.getElementById("emailInput").value.trim();
-      if (!email.includes("@")) {
-        alert("Невірна адреса пошти");
+    function renderStats(userData) {
+      const makeLine = (label, value) => `<div class="line"><strong>${label}:</strong> ${value || "—"}</div>`;
+      document.getElementById("app").innerHTML = `
+        <h2>Привіт, ${userData["Name"] || "користувачу"}!</h2>
+        ${makeLine("Бонус", userData["Бонус"])}
+        ${makeLine("% перехід знайомств", userData["% перехід знайомств"])}
+        ${makeLine("% перехід юа", userData["% перехід юа"])}
+        ${makeLine("Депи за вчора", userData["депи за вчора"])}
+        ${makeLine("Виплати за вчора", userData["виплати за вчора"])}
+        ${makeLine("Тотал за місяць", userData["тотал за місяць"])}
+        ${makeLine("Нет за місяць", userData["нет за місяць"])}
+        ${makeLine("Кількість гравців", userData["кількість гравців"])}
+        ${makeLine("Штрафи", userData["штрафи"])}
+        ${makeLine("Кількість хвороб", userData["кількість хвороб"])}
+        ${makeLine("Кількість вихідних", userData["кількість вихідних"])}
+        ${makeLine("Кількість відпусток", userData["кількість відпусток"])}
+        <div class="logout"><button onclick="logout()">Вийти</button></div>
+      `;
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (e) {
+        alert("Помилка входу: " + e.message);
+      }
+    }
+
+    async function logout() {
+      await signOut(auth);
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        renderLogin();
         return;
       }
-      localStorage.setItem("userEmail", email);
-      location.reload();
-    }
 
-    function logout() {
-      localStorage.removeItem("userEmail");
-      location.reload();
-    }
+      const email = user.email;
+      const res = await fetch(SHEET_URL);
+      const data = await res.json();
+      const userData = data.find(row => row.mail === email);
 
-    function loadStats(email) {
-      fetch(SHEET_URL)
-        .then(r => r.json())
-        .then(data => {
-          const user = data.find(row => row.mail === email);
-          if (!user) {
-            document.getElementById("stats").innerText = "Користувача не знайдено.";
-            return;
-          }
-
-          const makeLine = (label, value) => `<p><strong>${label}:</strong> ${value || '—'}</p>`;
-
-          document.getElementById("auth").innerHTML = `
-            <p>Ви увійшли як <strong>${user.mail}</strong> <button onclick="logout()">Вийти</button></p>
-          `;
-
-          document.getElementById("stats").innerHTML = `
-            <h2>Привіт, ${user["Name"] || 'Користувачу'}!</h2>
-            ${makeLine("Бонус", user["Бонус"])}
-            ${makeLine("% перехід знайомств", user["% перехід знайомств"])}
-            ${makeLine("% перехід юа", user["% перехід юа"])}
-            ${makeLine("Депи за вчора", user["депи за вчора"])}
-            ${makeLine("Виплати за вчора", user["виплати за вчора"])}
-            ${makeLine("Тотал за місяць", user["тотал за місяць"])}
-            ${makeLine("Нет за місяць", user["нет за місяць"])}
-            ${makeLine("Кількість гравців", user["кількість гравців"])}
-            ${makeLine("Штрафи", user["штрафи"])}
-            ${makeLine("Кількість хвороб", user["кількість хвороб"])}
-            ${makeLine("Кількість вихідних", user["кількість вихідних"])}
-            ${makeLine("Кількість відпусток", user["кількість відпусток"])}
-          `;
-        })
-        .catch(e => {
-          document.getElementById("stats").innerText = "❌ Помилка завантаження.";
-          console.error(e);
-        });
-    }
-
-    const email = localStorage.getItem("userEmail");
-    if (email) {
-      loadStats(email);
-    } else {
-      renderLogin();
-    }
+      if (userData) {
+        renderStats(userData);
+      } else {
+        document.getElementById("app").innerHTML = `
+          <p>Користувача з поштою <strong>${email}</strong> не знайдено в таблиці.</p>
+          <div class="logout"><button onclick="logout()">Вийти</button></div>
+        `;
+      }
+    });
   </script>
 </body>
 </html>
