@@ -5,48 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Статистика користувача</title>
 </head>
-<body>
-  <div id="stats" style="font-family:sans-serif;padding:20px;"></div>
+<body style="font-family:sans-serif;padding:20px;">
+  <div id="auth"></div>
+  <div id="stats" style="margin-top:20px;"></div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get("mail");
+    const API_URL = "https://script.google.com/macros/library/d/1Q5A4ywQalLy1Fki4Og5dJbv5uf4ggQcHpBnVFZSYc14EdGXouut4tJZJ/1";
 
-    if (!email) {
-      document.getElementById("stats").innerText = "Немає email у посиланні.";
-      throw new Error("No email provided");
+    function renderLogin() {
+      document.getElementById("auth").innerHTML = `
+        <h2>Вхід</h2>
+        <input type="email" id="emailInput" placeholder="Введіть вашу пошту" style="padding:8px;width:300px;" />
+        <button onclick="login()" style="padding:8px 12px;">Увійти</button>
+      `;
     }
 
-    fetch("https://script.google.com/macros/library/d/1Q5A4ywQalLy1Fki4Og5dJbv5uf4ggQcHpBnVFZSYc14EdGXouut4tJZJ/exec?user=" + encodeURIComponent(email))
-      .then(r => r.json())
-      .then(data => {
-        if (!data["mail"]) {
-          document.getElementById("stats").innerText = "Користувача не знайдено або немає даних.";
-          return;
-        }
+    function login() {
+      const email = document.getElementById("emailInput").value.trim();
+      if (!email.includes("@")) {
+        alert("Невірна адреса пошти");
+        return;
+      }
+      localStorage.setItem("userEmail", email);
+      location.reload();
+    }
 
-        const makeLine = (label, value) => `<p><strong>${label}:</strong> ${value || '—'}</p>`;
+    function logout() {
+      localStorage.removeItem("userEmail");
+      location.reload();
+    }
 
-        document.getElementById("stats").innerHTML = `
-          <h2>Привіт, ${data["Name"] || 'Користувачу'}!</h2>
-          ${makeLine("Бонус", data["Бонус"])}
-          ${makeLine("% перехід знайомств", data["% перехід знайомств"])}
-          ${makeLine("% перехід юа", data["% перехід юа"])}
-          ${makeLine("Депи за вчора", data["депи за вчора"])}
-          ${makeLine("Виплати за вчора", data["виплати за вчора"])}
-          ${makeLine("Тотал за місяць", data["тотал за місяць"])}
-          ${makeLine("Нет за місяць", data["нет за місяць"])}
-          ${makeLine("Кількість гравців", data["кількість гравців"])}
-          ${makeLine("Штрафи", data["штрафи"])}
-          ${makeLine("Кількість хвороб", data["кількість хвороб"])}
-          ${makeLine("Кількість вихідних", data["кількість вихідних"])}
-          ${makeLine("Кількість відпусток", data["кількість відпусток"])}
-        `;
-      })
-      .catch(e => {
-        document.getElementById("stats").innerText = "Помилка завантаження.";
-        console.error(e);
-      });
+    function loadStats(email) {
+      fetch(`${API_URL}?user=${encodeURIComponent(email)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data["mail"]) {
+            document.getElementById("stats").innerText = "Користувача не знайдено або немає даних.";
+            return;
+          }
+
+          const makeLine = (label, value) => `<p><strong>${label}:</strong> ${value || '—'}</p>`;
+
+          document.getElementById("auth").innerHTML = `
+            <p>Ви увійшли як <strong>${data["mail"]}</strong> <button onclick="logout()">Вийти</button></p>
+          `;
+
+          document.getElementById("stats").innerHTML = `
+            <h2>Привіт, ${data["Name"] || 'Користувачу'}!</h2>
+            ${makeLine("Бонус", data["Бонус"])}
+            ${makeLine("% перехід знайомств", data["% перехід знайомств"])}
+            ${makeLine("% перехід юа", data["% перехід юа"])}
+            ${makeLine("Депи за вчора", data["депи за вчора"])}
+            ${makeLine("Виплати за вчора", data["виплати за вчора"])}
+            ${makeLine("Тотал за місяць", data["тотал за місяць"])}
+            ${makeLine("Нет за місяць", data["нет за місяць"])}
+            ${makeLine("Кількість гравців", data["кількість гравців"])}
+            ${makeLine("Штрафи", data["штрафи"])}
+            ${makeLine("Кількість хвороб", data["кількість хвороб"])}
+            ${makeLine("Кількість вихідних", data["кількість вихідних"])}
+            ${makeLine("Кількість відпусток", data["кількість відпусток"])}
+          `;
+        })
+        .catch(() => {
+          document.getElementById("stats").innerText = "Помилка завантаження.";
+        });
+    }
+
+    const email = localStorage.getItem("userEmail");
+    if (email) {
+      loadStats(email);
+    } else {
+      renderLogin();
+    }
   </script>
 </body>
 </html>
