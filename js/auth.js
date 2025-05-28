@@ -6,7 +6,7 @@ window.login = async function () {
   const password = document.getElementById("password").value;
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    location.href = "/dashboard.html";
+    location.href = "dashboard.html";
   } catch (e) {
     alert("Помилка входу: " + e.message);
   }
