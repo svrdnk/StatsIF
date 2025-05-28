@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { auth } from "./firebase.js";
+import { auth } from "firebase.js";
 
 const SHEET_URL = "https://opensheet.elk.sh/1kTMLSuEuaxM-C1EzhUGccZdayDwFc4GbTSVD11s-j7M/Stats";
 
@@ -25,12 +25,12 @@ function render(data) {
 
 window.logout = async function () {
   await signOut(auth);
-  location.href = "/index.html";
+  location.href = "index.html";
 };
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    location.href = "/index.html";
+    location.href = "index.html";
     return;
   }
   const res = await fetch(SHEET_URL);
